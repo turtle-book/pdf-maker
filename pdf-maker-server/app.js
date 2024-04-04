@@ -1,28 +1,29 @@
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const dotenv = require('dotenv');
 const express = require('express');
 const session = require('express-session');
 const morgan = require('morgan');
-const nunjucks = require('nunjucks');
 const passport = require('passport');
 const path = require('path');
 
+// .env 파일로부터 환경변수 로드
 dotenv.config();
 
-// 라우터 require
-const pageRouter = require('./routes/page');
-
+// 라우터 등 require
+const authRouter = require('./routes/auth');
+const fileRouter = require('./routes/file');
 const { sequelize } = require('./models');
 const passportConfig = require('./passport');
 
+// Express 애플리케이션 생성
 const app = express();
+
+// Passport 인증 설정 초기화
 passportConfig();
+
+// 포트 설정
 app.set('port', process.env.PORT || 8000);
-app.set('view engine', 'html');
-nunjucks.configure('views', {
-  express: app,
-  watch: true,
-});
 
 // 시퀄라이즈: MySQL 연동
 sequelize.sync({ force: false })
@@ -33,6 +34,12 @@ sequelize.sync({ force: false })
 		console.error(err);
 	});
 
+// CORS 설정
+app.use(cors({
+	origin: 'http://localhost:5173',
+	credentials: true,
+}));
+
 // 미들웨어 셋팅
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -42,7 +49,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(session({
 	resave: false,
 	saveUninitialized: false,
-	secret: process.env.COOKIE_SECRET,
+	secret: process.env.SESSION_SECRET,
 	cookie: {
 		httpOnly: true,
 		secure: false,
@@ -54,7 +61,8 @@ app.use(passport.initialize);
 app.use(passport.session);
 
 // 라우터 연결
-app.use('/', pageRouter);
+app.use('/auth', authRouter);
+app.use('/file', fileRouter);
 
 // 404 Not Found 에러 캐치
 app.use((req, res, next) => {
@@ -65,10 +73,11 @@ app.use((req, res, next) => {
 
 // 에러 핸들링 미들웨어
 app.use((err, req, res, next) => {
-  res.locals.message = err.message;
-  res.locals.error = process.env.NODE_ENV !== 'production' ? err : {};
-  res.status(err.status || 500);
-  res.render('error');
+  res.status(err.status || 500).send({
+    error: {
+      message: err.message,
+    }
+  });
 });
 
 // 서버 실행

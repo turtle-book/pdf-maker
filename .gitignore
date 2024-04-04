@@ -41,6 +41,10 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+dist
+dist-ssr
+*.local
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -123,7 +127,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -184,6 +187,14 @@ dist
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Editor directories and files #
+.ide
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
